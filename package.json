@@ -1,0 +1,43 @@
+{
+  "name": "tiktok-private-api",
+  "version": "0.0.2",
+  "description": "Unofficial TikTok API wrapper for scraping user info and posts.",
+  "exports": "./build/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf build && tsc"
+  },
+  "author": "Athar Ahmed <itsatharahmed@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atharahmed/tiktok-private-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/atharahmed/tiktok-private-api/issues"
+  },
+  "homepage": "https://github.com/atharahmed/tiktok-private-api#readme",
+  "keywords": [
+    "tiktok",
+    "scraper",
+    "tiktok-api",
+    "tiktok-private-api",
+    "tiktok-scraper"
+  ],
+  "devDependencies": {
+    "@types/debug": "^4.1.7",
+    "@types/jsdom": "^16.2.14",
+    "@types/qs": "^6.9.7",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.7.3"
+  },
+  "dependencies": {
+    "canvas": "^2.9.1",
+    "debug": "^4.3.4",
+    "got": "^12.1.0",
+    "hpagent": "^1.0.0",
+    "http2-wrapper": "^2.1.11",
+    "jsdom": "^19.0.0",
+    "qs": "^6.10.3"
+  }
+}
