@@ -68,7 +68,7 @@ export class UserRepository extends Repository {
       "accept-encoding": "gzip, deflate, br",
       "accept-language": "en-US,en;q=0.9",
       "sec-ch-ua":
-        '" Not A;Brand";v="99", "Chromium";v="102", "Google Chrome";v="102"',
+        '" Not A;Brand";v="99", "Chromium";v="103", "Google Chrome";v="103"',
       "sec-ch-ua-mobile": "?0",
       "sec-ch-ua-platform": '"macOS"',
       "sec-fetch-dest": "document",
@@ -77,7 +77,7 @@ export class UserRepository extends Repository {
       "sec-fetch-user": "?1",
       "upgrade-insecure-requests": "1",
       "user-agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
     };
     const response = await this.client.request.send(url, headers);
 
