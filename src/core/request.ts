@@ -4,7 +4,7 @@ import got, {
   HTTPError,
   RequestError,
   TimeoutError,
-} from "got";
+} from "got-cjs";
 import { HttpProxyAgent, HttpsProxyAgent } from "hpagent";
 import http2 from "http2-wrapper";
 

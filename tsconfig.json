@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "removeComments": false,
     "alwaysStrict": true,
     "pretty": true,
-    "target": "ES2020",
+    "target": "ES2015",
     "sourceMap": true,
     "inlineSources": true,
-    "module": "ESNext",
+    "module": "CommonJS",
     "declaration": true,
     "declarationMap": true,
     "outDir": "./build",

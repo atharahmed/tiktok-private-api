@@ -8,8 +8,6 @@ import { UserRepositoryInfoResponseUserInfoRoot } from "../responses";
 
 export class UserRepository extends Repository {
   private userDebug = debug("tiktok:user");
-  private _userAgent =
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1";
 
   private _defaultApiParams = {
     aid: "1988",
@@ -23,7 +21,7 @@ export class UserRepository extends Repository {
     browser_language: "en-gb",
     browser_platform: "iPhone",
     browser_name: "Mozilla",
-    browser_version: this._userAgent,
+    browser_version: this.client.state.mobileUserAgent,
     browser_online: "true",
     timezone_name: "Asia/Karachi",
     is_page_visible: "true",
@@ -41,8 +39,6 @@ export class UserRepository extends Repository {
     priority_region: "US",
     verifyFp: "verify_khr3jabg_V7ucdslq_Vrw9_4KPb_AJ1b_Ks706M8zIJTq",
     device_id: null,
-    msToken:
-      "zeKJo6iucFiMvbscBo_w-4NMbuljK2u22uf5AgTNdeY85HGODm-QMx5J87Xhwd8bHSXMOZoKpufVijsEoiC21pzUuiM7PGo6cS0isipRE21d9ocsso03lVfTEv4xFYwOxwB8rkjcSEe-sfRKoA==",
   };
 
   constructor(private client: TikTokClient) {
@@ -76,12 +72,9 @@ export class UserRepository extends Repository {
       "sec-fetch-site": "none",
       "sec-fetch-user": "?1",
       "upgrade-insecure-requests": "1",
-      "user-agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
+      "user-agent": this.client.state.webUserAgent,
     };
     const response = await this.client.request.send(url, headers);
-
-    console.log(response.body);
 
     const parsed = await this.parseHtmlContent(response.body);
 
@@ -122,66 +115,96 @@ export class UserRepository extends Repository {
     cursor: number
   ) {
     const deviceId = this.client.helper.generateDeviceId();
-    const ttCsrfToken = this.client.helper.generateCsrfToken();
 
-    const query = {
-      ...this._defaultApiParams,
-      id: id,
-      secUid: secUid,
-      count: count,
-      cursor: cursor,
-      device_id: deviceId,
-      history_len: this.client.helper.getRandomInt(1, 5),
-    };
-
-    const url = `https://m.tiktok.com/api/post/item_list/?${qs.stringify(
-      query
-    )}`;
-
-    const signature = this.client.signer.sign(url, this._userAgent);
-
-    const finalUrl = url + `&_signature=${signature}`;
-
-    this.userDebug(`Generated signed url ${finalUrl}`);
-
-    const xTTParams = this.client.signer.ttParams(
-      { ...query, _signature: signature },
-      this._userAgent
+    let url = new URL(
+      `https://m.tiktok.com/api/post/item_list/?${qs.stringify({
+        ...this._defaultApiParams,
+        id: id,
+        secUid: secUid,
+        count: count,
+        cursor: cursor,
+        device_id: deviceId,
+        history_len: this.client.helper.getRandomInt(1, 5),
+      })}`
     );
 
-    const r = await this.client.request.send(
-      finalUrl,
-      { "x-secsdk-csrf-version": "1.2.5", "x-secsdk-csrf-request": "1" },
-      "HEAD"
-    );
+    const signature = this.client.signer.sign(url.toString());
 
-    const csrfToken =
-      r.headers && r.headers["x-ware-csrf-token"]
-        ? r.headers["x-ware-csrf-token"].toString().split(",")[1]
-        : "";
+    url.searchParams.append("_signature", signature);
 
-    const csrf_session_id = this.client.helper.getCookieValue(
-      r.headers["set-cookie"],
-      "csrf_session_id"
-    );
+    this.userDebug(`Generated signed url ${url.toString()}`);
 
-    const headers = {
-      accept: "application/json, text/plain, */*",
-      "accept-encoding": "gzip",
-      "accept-language": "en-US,en;q=0.9",
-      origin: "https://www.tiktok.com",
-      referer: "https://www.tiktok.com/",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "none",
-      "sec-gpc": "1",
-      "user-agent": this._userAgent,
-      "x-secsdk-csrf-token": csrfToken,
+    const bogus = this.client.signer.bogus(url.searchParams.toString());
+
+    url.searchParams.append("X-bogus", bogus);
+
+    this.userDebug(`Generated bogus url ${url}`);
+
+    const xTTParams = this.client.signer.xttparams(url.searchParams.toString());
+
+    const response = await this.client.request.send(url.toString(), {
+      ...this.client.state.defaultApiHeaders,
+      "user-agent": this.client.state.mobileUserAgent,
       "x-tt-params": xTTParams,
-      cookie: `csrf_session_id=${csrf_session_id}; tt_csrf_token=${ttCsrfToken}; tt_webid=${deviceId}; tt_webid_v2=${deviceId}; ttwid`,
-    };
+    });
 
-    const response = await this.client.request.send(finalUrl, headers);
+    const responseBody = JSON.parse(response.body);
+
+    if (responseBody.statusCode === 0 && responseBody.itemList) {
+      return responseBody;
+    }
+
+    throw new GenericError("Generic API error happened.");
+  }
+
+  /**
+   * Get user liked videos
+   *
+   * @param id
+   * @param secUid
+   * @param count
+   * @param cursor
+   * @returns
+   */
+  public async liked(
+    id: number,
+    secUid: string,
+    count: number,
+    cursor: number
+  ) {
+    const deviceId = this.client.helper.generateDeviceId();
+
+    let url = new URL(
+      `https://m.tiktok.com/api/favorite/item_list/?${qs.stringify({
+        ...this._defaultApiParams,
+        id: id,
+        secUid: secUid,
+        count: count,
+        cursor: cursor,
+        device_id: deviceId,
+        history_len: this.client.helper.getRandomInt(1, 5),
+      })}`
+    );
+
+    const signature = this.client.signer.sign(url.toString());
+
+    url.searchParams.append("_signature", signature);
+
+    this.userDebug(`Generated signed url ${url.toString()}`);
+
+    const bogus = this.client.signer.bogus(url.searchParams.toString());
+
+    url.searchParams.append("X-bogus", bogus);
+
+    this.userDebug(`Generated bogus url ${url}`);
+
+    const xTTParams = this.client.signer.xttparams(url.searchParams.toString());
+
+    const response = await this.client.request.send(url.toString(), {
+      ...this.client.state.defaultApiHeaders,
+      "user-agent": this.client.state.mobileUserAgent,
+      "x-tt-params": xTTParams,
+    });
 
     const responseBody = JSON.parse(response.body);
 
