@@ -19,7 +19,7 @@ export class SignerService {
     );
 
     const resourceLoader = new ResourceLoader({
-      userAgent: this.client.state.mobileUserAgent,
+      userAgent: this.client.state.webUserAgent,
     });
 
     const { window } = new JSDOM(``, {
@@ -51,7 +51,6 @@ export class SignerService {
   }
 
   xttparams(params: any) {
-    params += "&is_encryption=1";
     // Encrypt query string using aes-128-cbc
     const cipher = createCipheriv(
       "aes-128-cbc",
