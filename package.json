@@ -1,6 +1,6 @@
 {
   "name": "tiktok-private-api",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Unofficial TikTok API wrapper for scraping user info and posts.",
   "exports": "./build/index.js",
   "type": "commonjs",
