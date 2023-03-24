@@ -62,7 +62,12 @@ export class UserRepository extends Repository {
           itemList: Object.values(itemModule),
         },
         seoProps: {
-          metaParams: obj["SEO"]["metaParams"],
+          metaParams:
+            obj && obj["SEOState"]
+              ? obj["SEOState"]["metaParams"]
+              : obj && obj["SEO"]
+              ? obj["SEO"]["metaParams"]
+              : [],
         },
       };
     }
