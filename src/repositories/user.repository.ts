@@ -50,26 +50,44 @@ export class UserRepository extends Repository {
     const parsed = await this.parseHtmlContent(response.body);
 
     if (parsed) {
-      const obj = JSON.parse(parsed);
+      const obj = JSON.parse(parsed.data);
 
-      const userModule = obj["UserModule"];
-      const itemModule = obj["ItemModule"];
+      if (parsed.sigiState) {
+        const userModule = obj["UserModule"];
+        const itemModule = obj["ItemModule"];
 
-      return {
-        userInfo: {
-          ...userModule.users[username],
-          stats: userModule.stats[username],
-          itemList: Object.values(itemModule),
-        },
-        seoProps: {
-          metaParams:
-            obj && obj["SEOState"]
-              ? obj["SEOState"]["metaParams"]
-              : obj && obj["SEO"]
-              ? obj["SEO"]["metaParams"]
-              : [],
-        },
-      };
+        return {
+          userInfo: {
+            ...userModule.users[username],
+            stats: userModule.stats[username],
+            itemList: Object.values(itemModule),
+          },
+          seoProps: {
+            metaParams:
+              obj && obj["SEOState"]
+                ? obj["SEOState"]["metaParams"]
+                : obj && obj["SEO"]
+                ? obj["SEO"]["metaParams"]
+                : [],
+          },
+        };
+      }
+
+      if (
+        obj["__DEFAULT_SCOPE__"] &&
+        obj["__DEFAULT_SCOPE__"]["webapp.user-detail"]
+      ) {
+        const userModule =
+          obj["__DEFAULT_SCOPE__"]["webapp.user-detail"]["userInfo"];
+        return {
+          userInfo: {
+            ...userModule.user,
+            stats: userModule.stats,
+            itemList: userModule.itemList,
+          },
+          seoProps: {},
+        };
+      }
     }
 
     return null;
@@ -212,7 +230,23 @@ export class UserRepository extends Repository {
         .split('<script id="SIGI_STATE" type="application/json">')[1]
         .split("</script>")[0];
 
-      return rawVideoMetadata;
+      return {
+        sigiState: true,
+        data: rawVideoMetadata,
+      };
+    }
+
+    if (content.includes("__UNIVERSAL_DATA_FOR_REHYDRATION__")) {
+      const rawVideoMetadata = content
+        .split(
+          '<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">'
+        )[1]
+        .split("</script>")[0];
+
+      return {
+        sigiState: false,
+        data: rawVideoMetadata,
+      };
     }
   }
 }
